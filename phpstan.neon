@@ -1,0 +1,13 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - src
+        - database
+    ignoreErrors:
+        # Traits/interfaces here are public API for consuming apps, which PHPStan can't see usage of.
+        -
+            identifiers:
+                - trait.unused
