@@ -6,7 +6,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Symfony\Component\HttpFoundation\Response;
 use VanDmade\Hookamatic\Models\InboundEvent;
 
-class InboundWebhookProcessed
+class InboundWebhookMaxAttempts
 {
 
     use Dispatchable;
@@ -14,8 +14,7 @@ class InboundWebhookProcessed
     public function __construct(
         public readonly string $provider,
         public readonly InboundEvent $inboundEvent,
-        public readonly Response $response,
-        public readonly int $durationMs
+        public readonly Response $response
     ) {}
 
 }
