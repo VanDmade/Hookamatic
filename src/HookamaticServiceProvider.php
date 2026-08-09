@@ -2,12 +2,15 @@
 
 namespace VanDmade\Hookamatic;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use VanDmade\Hookamatic\Outbound\Signing\SignerInterface;
 use VanDmade\Hookamatic\Outbound\Signing\HmacSigner;
 use VanDmade\Hookamatic\Outbound\Retry\RetryPolicyInterface;
 use VanDmade\Hookamatic\Outbound\Retry\BackoffRetryPolicy;
 use VanDmade\Hookamatic\Middleware\VerifyInboundWebhook;
+use VanDmade\Hookamatic\Models\Subscribers\Subscriber;
 use VanDmade\Hookamatic\Console\Commands\InboundStatsCommand;
 use VanDmade\Hookamatic\Console\Commands\OutboundStatsCommand;
 use VanDmade\Hookamatic\Console\Commands\RetryFailedDeliveriesCommand;
@@ -41,8 +44,24 @@ class HookamaticServiceProvider extends ServiceProvider
     {
         $router = $this->app['router'];
         $router->aliasMiddleware('hookamatic', VerifyInboundWebhook::class);
+        $router->bind('subscriber', function($value) {
+            $subscriber = is_numeric($value)
+                ? Subscriber::find($value)
+                : Subscriber::where('slug', $value)->first();
+            if (is_null($subscriber)) {
+                throw new ModelNotFoundException();
+            }
+            return $subscriber;
+        });
+        // Default: require login to manage subscribers/event types. Override this gate
+        // in your own app for anything more specific (e.g. admin-only) instead of
+        // changing the guard mechanism itself.
+        Gate::define('manage-hookamatic', function ($user = null) {
+            return $user !== null;
+        });
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadRoutesFrom(__DIR__.'/../routes.php');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'hookamatic');
         if ($this->app->runningInConsole()) {
             $this->commands([
                 RetryFailedDeliveriesCommand::class,

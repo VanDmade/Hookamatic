@@ -25,26 +25,28 @@ class AddOrganizationScopingCommand extends Command
             $this->error('Organization model class '.$organizationModel.' does not exist or is not an Eloquent model. Please check your configuration.');
             return self::FAILURE;
         }
-        // Checks that the base migrations have actually been run before altering the table
-        if (!Schema::hasTable('hookamatic_subscribers')) {
-            $this->error('hookamatic_subscribers table does not exist. Run the base Hookamatic migrations first.');
-            return self::FAILURE;
-        }
-        // Checks to see if the organization ID column already exists
-        if (Schema::hasColumn('hookamatic_subscribers', 'organization_id')) {
-            $this->info('organization_id already exists on hookamatic_subscribers, skipping.');
-            return self::SUCCESS;
-        }
         $organizationModelInstance = new $organizationModel;
-        Schema::table('hookamatic_subscribers', function(Blueprint $table) use ($organizationModelInstance) {
-            $table->bigInteger('organization_id')->unsigned()->nullable();
-            $table->foreign('organization_id')
-                ->references($organizationModelInstance->getKeyName())
-                ->on($organizationModelInstance->getTable())
-                ->onUpdate('cascade')
-                ->onDelete('cascade');
-        });
-        $this->info('organization_id added to hookamatic_subscribers table.');
+        foreach (['hookamatic_subscribers', 'hookamatic_event_types'] as $tableName) {
+            // Checks that the base migrations have actually been run before altering the table
+            if (!Schema::hasTable($tableName)) {
+                $this->error($tableName.' table does not exist. Run the base Hookamatic migrations first.');
+                return self::FAILURE;
+            }
+            // Checks to see if the organization ID column already exists
+            if (Schema::hasColumn($tableName, 'organization_id')) {
+                $this->info('organization_id already exists on '.$tableName.', skipping.');
+                continue;
+            }
+            Schema::table($tableName, function(Blueprint $table) use ($organizationModelInstance) {
+                $table->bigInteger('organization_id')->unsigned()->nullable();
+                $table->foreign('organization_id')
+                    ->references($organizationModelInstance->getKeyName())
+                    ->on($organizationModelInstance->getTable())
+                    ->onUpdate('cascade')
+                    ->onDelete('cascade');
+            });
+            $this->info('organization_id added to '.$tableName.' table.');
+        }
         return self::SUCCESS;
     }
 

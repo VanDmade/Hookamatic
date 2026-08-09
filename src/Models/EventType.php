@@ -5,19 +5,22 @@ namespace VanDmade\Hookamatic\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use VanDmade\Hookamatic\Concerns\HasOrganization;
 use VanDmade\Hookamatic\Models\Subscribers;
 
 class EventType extends Model
 {
 
-    use SoftDeletes;
+    use SoftDeletes, HasOrganization;
 
     protected $table = 'hookamatic_event_types';
 
     protected $fillable = [
         'name',
         'description',
+        'organization_id',
         'deleted_at',
         'deleted_by',
         'created_by',
@@ -49,16 +52,27 @@ class EventType extends Model
     }
 
     /**
-     * @return HasManyThrough<Subscribers\Subscriber, Subscribers\Event, $this>
+     * hookamatic_subscriber_events is a genuine many-to-many join table (it has FKs to
+     * both sides), not a linear chain, so this is a BelongsToMany, not a HasManyThrough.
+     *
+     * @return BelongsToMany<Subscribers\Subscriber, $this>
      */
-    public function subscribers(): HasManyThrough
+    public function subscribers(): BelongsToMany
     {
-        return $this->hasManyThrough(
+        return $this->belongsToMany(
             Subscribers\Subscriber::class,
-            Subscribers\Event::class,
+            'hookamatic_subscriber_events',
             'event_type_id',
             'subscriber_id'
-        );
+        )->withPivot(['priority', 'response_protocol_reference'])->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<Subscribers\Event>
+     */
+    public function subscriberLinks(): HasMany
+    {
+        return $this->hasMany(Subscribers\Event::class, 'event_type_id');
     }
 
     /**

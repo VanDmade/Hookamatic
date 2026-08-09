@@ -5,12 +5,17 @@ namespace VanDmade\Hookamatic\Models\Subscribers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use VanDmade\Hookamatic\Concerns\HasOrganization;
 use VanDmade\Hookamatic\Models\Delivery;
+use VanDmade\Hookamatic\Models\EventType;
 
 class Subscriber extends Model
 {
+
+    use HasOrganization;
 
     protected $table = 'hookamatic_subscribers';
 
@@ -97,11 +102,24 @@ class Subscriber extends Model
     }
 
     /**
-     * @return BelongsTo<Model, $this>
+     * @return HasMany<Event, $this>
      */
-    public function organization(): BelongsTo
+    public function eventLinks(): HasMany
     {
-        return $this->belongsTo(config('hookamatic.organization_model'), 'organization_id');
+        return $this->hasMany(Event::class, 'subscriber_id');
+    }
+
+    /**
+     * @return BelongsToMany<EventType, $this>
+     */
+    public function eventTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            EventType::class,
+            'hookamatic_subscriber_events',
+            'subscriber_id',
+            'event_type_id'
+        )->withPivot(['priority', 'response_protocol_reference'])->withTimestamps();
     }
 
     /**
