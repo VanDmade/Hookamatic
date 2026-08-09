@@ -30,6 +30,7 @@ class Delivery extends Model
         'sent_at',
         'failed_at',
         'next_attempt_at',
+        'retried_from_delivery_id',
         // Not an actual column, but we want to be able to mass-assign it for convenience.
         'response',
     ];
@@ -109,6 +110,14 @@ class Delivery extends Model
     public function subscriber(): BelongsTo
     {
         return $this->belongsTo(Subscribers\Subscriber::class, 'subscriber_id');
+    }
+
+    /**
+     * @return BelongsTo<Delivery, $this>
+     */
+    public function retriedFrom(): BelongsTo
+    {
+        return $this->belongsTo(Delivery::class, 'retried_from_delivery_id');
     }
 
 }

@@ -40,6 +40,12 @@ return new class extends Migration
             $table->timestamp('sent_at')->nullable();
             $table->timestamp('failed_at')->nullable();
             $table->timestamp('next_attempt_at')->nullable();
+            $table->bigInteger('retried_from_delivery_id')->unsigned()->nullable();
+            $table->foreign('retried_from_delivery_id')
+                ->references('id')
+                ->on('hookamatic_deliveries')
+                ->onUpdate('cascade')
+                ->onDelete('set null');
             $table->index(['outbound_event_id', 'subscriber_id']);
             $table->index(['status', 'created_at']);
         });

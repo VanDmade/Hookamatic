@@ -41,4 +41,19 @@ class SubscriberService
         }
     }
 
+    public function markAsEnabled(int|Subscriber $subscriber): void
+    {
+        // Allows for the subscriber to be passed in as either an integer ID or a Subscriber instance
+        if (is_int($subscriber)) {
+            $subscriber = $this->get($subscriber);
+        }
+        if ($subscriber) {
+            $subscriber->disabled_at = null;
+            $subscriber->disabled_reason = null;
+            $subscriber->disabled_by = null;
+            $subscriber->disabled_by_system = false;
+            $subscriber->save();
+        }
+    }
+
 }

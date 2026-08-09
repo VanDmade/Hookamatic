@@ -60,7 +60,8 @@ class DeliveryService
         int $attemptNumber = 1,
         ?string $uuid = null,
         ?Carbon $nextAttemptAt = null,
-        Priority $priority = Priority::NORMAL
+        Priority $priority = Priority::NORMAL,
+        ?int $retriedFromDeliveryId = null
     ): Delivery {
         if (is_null($uuid)) {
             $uuid = (string) Str::uuid();
@@ -77,6 +78,7 @@ class DeliveryService
             'status' => $status,
             'attempt_number' => $attemptNumber,
             'next_attempt_at' => $nextAttemptAt,
+            'retried_from_delivery_id' => $retriedFromDeliveryId,
         ]);
     }
 
@@ -92,6 +94,18 @@ class DeliveryService
             attemptNumber: $delivery->attempt_number + 1,
             nextAttemptAt: $nextAttemptDelay ? now()->addSeconds($nextAttemptDelay) : null,
             priority: $delivery->priority
+        );
+    }
+
+    public function reviveExhausted(Delivery $delivery): Delivery
+    {
+        return $this->create(
+            subscriberId: $delivery->subscriber_id,
+            outboundEventId: $delivery->outbound_event_id,
+            payload: $delivery->request_payload,
+            uuid: $delivery->delivery_uuid,
+            priority: $delivery->priority,
+            retriedFromDeliveryId: $delivery->id
         );
     }
 

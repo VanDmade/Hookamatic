@@ -8,6 +8,7 @@ use VanDmade\Hookamatic\Outbound\Signing\HmacSigner;
 use VanDmade\Hookamatic\Outbound\Retry\RetryPolicyInterface;
 use VanDmade\Hookamatic\Outbound\Retry\BackoffRetryPolicy;
 use VanDmade\Hookamatic\Middleware\VerifyInboundWebhook;
+use VanDmade\Hookamatic\Console\Commands\RetryFailedDeliveriesCommand;
 use VanDmade\Hookamatic\EventServiceProvider;
 
 class HookamaticServiceProvider extends ServiceProvider
@@ -40,6 +41,11 @@ class HookamaticServiceProvider extends ServiceProvider
         $router->aliasMiddleware('hookamatic', VerifyInboundWebhook::class);
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadRoutesFrom(__DIR__.'/../routes.php');
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                RetryFailedDeliveriesCommand::class,
+            ]);
+        }
     }
 
 }

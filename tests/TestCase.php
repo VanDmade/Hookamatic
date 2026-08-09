@@ -2,11 +2,14 @@
 
 namespace VanDmade\Hookamatic\Tests;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
 use VanDmade\Hookamatic\HookamaticServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
+
+    use RefreshDatabase;
 
     protected function getPackageProviders($app): array
     {
