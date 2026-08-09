@@ -8,6 +8,8 @@ use VanDmade\Hookamatic\Outbound\Signing\HmacSigner;
 use VanDmade\Hookamatic\Outbound\Retry\RetryPolicyInterface;
 use VanDmade\Hookamatic\Outbound\Retry\BackoffRetryPolicy;
 use VanDmade\Hookamatic\Middleware\VerifyInboundWebhook;
+use VanDmade\Hookamatic\Console\Commands\InboundStatsCommand;
+use VanDmade\Hookamatic\Console\Commands\OutboundStatsCommand;
 use VanDmade\Hookamatic\Console\Commands\RetryFailedDeliveriesCommand;
 use VanDmade\Hookamatic\EventServiceProvider;
 
@@ -44,6 +46,8 @@ class HookamaticServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 RetryFailedDeliveriesCommand::class,
+                OutboundStatsCommand::class,
+                InboundStatsCommand::class,
             ]);
         }
     }
