@@ -13,6 +13,16 @@ class SubscriberService
         return Subscriber::find($id);
     }
 
+    public function findByIdOrSlug(int|string $identifier): Subscriber
+    {
+        $subscriber = is_numeric($identifier)
+            ? $this->get($identifier) : Subscriber::where('slug', $identifier)->first();
+        if (is_null($subscriber)) {
+            throw new InvalidArgumentException('No subscriber found for identifier: '.$identifier);
+        }
+        return $subscriber;
+    }
+
     public function markAsDisabled(int|Subscriber $subscriber, string $reason): void
     {
         // Allows for the subscriber to be passed in as either an integer ID or a Subscriber instance

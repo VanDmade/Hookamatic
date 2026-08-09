@@ -35,6 +35,9 @@ return new class extends Migration
             // name - same reasoning as api_key_reference on subscribers. Null = nothing is
             // called when a delivery for this subscriber+event pairing resolves.
             $table->string('response_protocol_reference')->nullable();
+            // How urgently this subscriber+event pairing should be sent when the subscriber
+            // is rate-limited and there isn't budget for every pending delivery. 3 = Priority::NORMAL.
+            $table->unsignedTinyInteger('priority')->default(3);
             $table->unique(['subscriber_id', 'event_type_id']);
             $table->index('event_type_id');
         });

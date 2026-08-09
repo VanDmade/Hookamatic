@@ -4,6 +4,7 @@ namespace VanDmade\Hookamatic\Models\Subscribers;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use VanDmade\Hookamatic\Enums\Priority;
 use VanDmade\Hookamatic\Models\EventType;
 
 class Event extends Model
@@ -13,12 +14,15 @@ class Event extends Model
 
     protected $fillable = [
         'response_protocol_reference',
+        'priority',
         'subscriber_id',
         'event_type_id',
         'created_by',
     ];
 
-    protected $casts = [];
+    protected $casts = [
+        'priority' => Priority::class,
+    ];
 
     protected $hidden = [
         'subscriber_id',

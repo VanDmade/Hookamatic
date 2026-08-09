@@ -85,6 +85,21 @@ class Delivery extends Model
     }
 
     /**
+     * @return HasOneThrough<EventType, OutboundEvent>
+     */
+    public function eventType(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            EventType::class,
+            OutboundEvent::class,
+            'id',
+            'id',
+            'outbound_event_id',
+            'event_type_id'
+        );
+    }
+
+    /**
      * @return BelongsTo<Subscribers\Subscriber, $this>
      */
     public function subscriber(): BelongsTo

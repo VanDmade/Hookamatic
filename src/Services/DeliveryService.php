@@ -11,9 +11,20 @@ use Illuminate\Support\Str;
 class DeliveryService
 {
 
-    public function getPendingDeliveries($ignoreNextAttemptAt = false): Collection
-    {
+    public function getPendingDeliveries(
+        array|string $subscriberIds = [],
+        bool $excludeSubscribers = false,
+        bool $ignoreNextAttemptAt = false
+    ): Collection {
+        // Determines if the subscriberIds needs to be normalized to an array
+        if (is_string($subscriberIds)) {
+            $subscriberIds = explode(',', $subscriberIds);
+        }
         return Delivery::where('status', DeliveryStatus::PENDING)
+            ->with('subscriber')
+            ->when(!empty($subscriberIds), fn($query) => $excludeSubscribers
+                ? $query->whereNotIn('subscriber_id', $subscriberIds)
+                : $query->whereIn('subscriber_id', $subscriberIds))
             ->where(function($query) use ($ignoreNextAttemptAt) {
                 if ($ignoreNextAttemptAt) {
                     return;

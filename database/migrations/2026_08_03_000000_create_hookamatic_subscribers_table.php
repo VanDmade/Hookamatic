@@ -26,6 +26,9 @@ return new class extends Migration
                 ->onUpdate('cascade')
                 ->onDelete('set null');
             $table->string('name')->nullable();
+            // Auto-generated from name (spaces -> underscores) if not set explicitly. Lets a
+            // developer reference a subscriber by a readable identifier instead of just its ID.
+            $table->string('slug')->nullable()->unique();
             $table->string('url');
             $table->json('headers')->nullable();
             // Encrypted casts on the model produce ciphertext far longer than a varchar(255), hence text().
@@ -45,6 +48,9 @@ return new class extends Migration
             $table->boolean('disabled_by_system')->default(false);
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('last_called_at')->nullable();
+            // Null on either means no self-imposed outbound rate limit for this subscriber.
+            $table->unsignedInteger('rate_limit_max')->nullable();
+            $table->unsignedInteger('rate_limit_interval_seconds')->nullable();
             if (!is_null($organizationModel)) {
                 $table->bigInteger('organization_id')->unsigned()->nullable();
                 $table->foreign('organization_id')

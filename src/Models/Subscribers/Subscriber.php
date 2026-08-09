@@ -16,6 +16,7 @@ class Subscriber extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'url',
         'headers',
         'api_key_reference',
@@ -25,6 +26,8 @@ class Subscriber extends Model
         'disabled_by_system',
         'expires_at',
         'last_called_at',
+        'rate_limit_max',
+        'rate_limit_interval_seconds',
         'organization_id',
         'created_by',
     ];
@@ -54,6 +57,9 @@ class Subscriber extends Model
             $model->expires_at = $model->expires_at ?? $expiresAt;
             if (empty($model->signing_secret)) {
                 $model->signing_secret = $model->generateSigningSecret();
+            }
+            if (empty($model->slug) && !empty($model->name)) {
+                $model->slug = strtolower(Str::slug($model->name, '_'));
             }
         });
     }
