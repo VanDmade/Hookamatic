@@ -55,6 +55,11 @@ return [
         // deliveries in one pass). The queue supervisor kills the job past this and calls
         // failed(). Larger than max_lock_seconds since one run covers many deliveries.
         'job_timeout' => 900,
+        // Seconds a delivery must wait before its EFFECTIVE priority (for ordering only -
+        // the stored priority never changes) ages up one level. Null disables aging
+        // entirely. Continues aging past a single level, e.g. at 3x this value a LOWEST
+        // delivery orders as HIGHEST. Measured from next_attempt_at if set, else created_at.
+        'priority_aging_seconds' => 300,
     ],
 
     'inbound' => [

@@ -5,8 +5,10 @@ namespace VanDmade\Hookamatic\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Http\Client\Response;
 use VanDmade\Hookamatic\Enums\DeliveryStatus;
+use VanDmade\Hookamatic\Enums\Priority;
 
 class Delivery extends Model
 {
@@ -19,6 +21,7 @@ class Delivery extends Model
         'delivery_uuid',
         'attempt_number',
         'status',
+        'priority',
         'request_payload',
         'response_status_code',
         'response_body',
@@ -36,6 +39,7 @@ class Delivery extends Model
         'failed_at' => 'datetime',
         'next_attempt_at' => 'datetime',
         'status' => DeliveryStatus::class,
+        'priority' => Priority::class,
     ];
 
     protected $hidden = [

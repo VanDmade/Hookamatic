@@ -29,6 +29,7 @@ return new class extends Migration
             $table->uuid('delivery_uuid');
             $table->unsignedInteger('attempt_number')->default(1);
             $table->string('status', 16);
+            $table->unsignedTinyInteger('priority')->default(3);
             $table->json('request_payload')->nullable();
             $table->unsignedSmallInteger('response_status_code')->nullable();
             $table->text('response_body')->nullable();

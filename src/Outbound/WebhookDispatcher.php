@@ -2,7 +2,9 @@
 
 namespace VanDmade\Hookamatic\Outbound;
 
+use VanDmade\Hookamatic\Enums\Priority;
 use VanDmade\Hookamatic\Models\EventType;
+use VanDmade\Hookamatic\Models\Subscribers\Event as SubscriberEvent;
 use VanDmade\Hookamatic\Enums\DeliveryStatus;
 use VanDmade\Hookamatic\Services\DeliveryService;
 use VanDmade\Hookamatic\Services\EventTypeService;
@@ -44,7 +46,11 @@ class WebhookDispatcher
             $payload,
             $trace
         );
+        $priorities = SubscriberEvent::where('event_type_id', $eventType->id)
+            ->pluck('priority', 'subscriber_id');
         foreach ($subscribers as $subscriber) {
+            $priority = isset($priorities[$subscriber->id])
+                ? Priority::from($priorities[$subscriber->id]) : Priority::NORMAL;
             $delivery = $this->deliveryService->create(
                 $subscriber->id,
                 $outboundEvent->id,
@@ -53,7 +59,8 @@ class WebhookDispatcher
                 // ready-to-run queue for whenever they're re-enabled), it's just
                 // created paused instead of pending so nothing actually attempts it.
                 !is_null($subscriber->disabled_at) ?
-                    DeliveryStatus::PAUSED : DeliveryStatus::PENDING
+                    DeliveryStatus::PAUSED : DeliveryStatus::PENDING,
+                priority: $priority
             );
             // Total deliveries created for this event
             $count++;
