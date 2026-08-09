@@ -2,7 +2,14 @@
 
 namespace VanDmade\Hookamatic\Facades;
 
-class Hookamatic
+use Illuminate\Support\Facades\Facade;
+
+class Hookamatic extends Facade
 {
+
+    protected static function getFacadeAccessor(): string
+    {
+        return 'hookamatic';
+    }
 
 }
