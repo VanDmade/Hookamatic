@@ -1,22 +1,55 @@
 # Retries and Backoff
 
-> One paragraph: a failed delivery isn't given up on immediately - it's retried on a backoff schedule up to `max_delivery_attempts`, then marked exhausted.
+A failed delivery isn't given up on immediately (Never give up! Never surrender) - a new attempt is scheduled on a backoff delay, up to `hookamatic.max_delivery_attempts` (default 3) total attempts, before the delivery is marked `exhausted`. (It surrendered...)
 
 ## The retry policy
 
-> Short sentence: `RetryPolicyInterface`/`BackoffRetryPolicy`, what `retry.delay` and `retry.exponential_delay` actually do to the schedule (with a quick worked example: attempt 2, 3, 4 delays).
+`BackoffRetryPolicy::nextAttemptDelay($attemptNumber)` returns how many seconds to wait before that attempt number runs. With `hookamatic.retry.exponential_delay` `true` (the default), the delay doubles each time: `delay * 2^(attemptNumber - 1)`. With it `false`, every retry waits the same flat `hookamatic.retry.delay` seconds.
+
+With the defaults (`delay = 5`, exponential on):
+
+| Attempt fails | Next attempt scheduled after |
+|---|---|
+| 1 | 10s (`5 * 2^1`) |
+| 2 | 20s (`5 * 2^2`) |
+| 3 | *(max_delivery_attempts reached - marked exhausted instead)* |
+
+A retry isn't the same `Delivery` row updated in place - `DeliveryService::createAttempt()` creates a brand-new row with the same `delivery_uuid`, an incremented `attempt_number`, and `next_attempt_at` set to `now() + delay`. `DeliverWebhookJob` won't pick it up until that time passes. The original failed row stays as a permanent record of that attempt. (Log purposes... So you as the developer can blame someone else!)
 
 ## Exhausted deliveries
 
-> Short sentence: what "exhausted" means (`DeliveryStatus::EXHAUSTED`), and the `toggle_disabled_on_exhausted_delivery`/`toggle_disabled_after_exhausted_deliveries` config options that can auto-disable a misbehaving subscriber.
+Once a delivery's `attempt_number` reaches `hookamatic.max_delivery_attempts`, its status becomes `exhausted` instead of scheduling another retry, and `WebhookDeliveryExhausted` fires. Two config options can react automatically:
+
+- `toggle_disabled_on_exhausted_delivery` (default `false`) - disables the subscriber the instant *any* single delivery exhausts.
+- `toggle_disabled_after_exhausted_deliveries` (default `null`) - disables the subscriber after this many exhausted deliveries within the past 24 hours. Ignored if the option above, `toggle_disabled_on_exhausted_delivery` is `true`.
+
+Either way, the subscriber ends up disabled with `disabled_by_system = true` via `SubscriberService::markAsDisabled()` - see [Subscribers & Event Types](02-subscribers.md#disabling--enabling-a-subscriber).
 
 ## Retrying manually
 
-> Short sentence + command: `php artisan hookamatic:retry-failed-deliveries` and its filter flags (event type/subscriber/organization/status/date) - link to [Artisan Commands](08-artisan-commands.md) for the full flag reference rather than repeating it here.
+```bash
+php artisan hookamatic:retry-failed-deliveries
+php artisan hookamatic:retry-failed-deliveries --subscribers=42 --re-enable-subscriber
+```
+
+Finds every `exhausted` delivery matching the given filters and calls `DeliveryService::reviveExhausted()` on each - which creates a fresh attempt-1 `Delivery`, exactly like a normal retry. `--re-enable-subscriber` additionally re-enables any matched subscriber that was disabled *by the system* (not manually) as a result of those exhausted deliveries. See [Artisan Commands](08-artisan-commands.md) for the full filter flag reference.
 
 ## Swapping the retry policy
 
-> Short sentence: implement `RetryPolicyInterface` yourself and set `hookamatic.outbound.retry_policy` in config.
+```php
+use VanDmade\Hookamatic\Outbound\Retry\RetryPolicyInterface;
+
+class MyRetryPolicy implements RetryPolicyInterface
+{
+    public function nextAttemptDelay(int $attemptNumber): ?int
+    {
+        // Return null to mean "don't retry" for a given attempt number.
+        // How dare you rewrite mine... I wrote it perfectly.
+    }
+}
+```
+
+Set `hookamatic.outbound.retry_policy` to your class and `DeliverWebhookJob` will use it instead of `BackoffRetryPolicy`.
 
 ## See also
 

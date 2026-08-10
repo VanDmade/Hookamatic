@@ -5,75 +5,61 @@ use VanDmade\Hookamatic\Outbound\Retry\BackoffRetryPolicy;
 use VanDmade\Hookamatic\Inbound\Providers\StripeVerifier;
 
 return [
-
-    // Maximum number of delivery attempts before a delivery is marked as exhausted.
     'max_delivery_attempts' => 3,
-
-    // Disables a subscriber the moment any single delivery becomes exhausted.
     'toggle_disabled_on_exhausted_delivery' => false,
-
-    // Disables a subscriber after this many exhausted deliveries within the past day.
     // Ignored when toggle_disabled_on_exhausted_delivery is true. Null disables this check.
     'toggle_disabled_after_exhausted_deliveries' => null,
-
-    // Fully-qualified model class used for organization/tenant scoping. Null disables it.
+    // Null disables organization/tenant scoping.
     'organization_model' => null,
-
-    // Throws instead of silently returning false when an event type has no subscribers.
     'fail_loud_on_no_subscribers' => false,
+    // Bypasses Hookamatic on a provider-less route instead of returning 400.
+    'allow_without_provider' => false,
 
     'retry' => [
-        // Base delay, in seconds, before a failed delivery is retried.
         'delay' => 5,
-        // When true, the delay doubles per attempt (delay * 2^(attempt - 1)).
+        // Doubles the delay per attempt (delay * 2^(attempt - 1)).
         'exponential_delay' => true,
     ],
-
-    // Whether HmacSigner JSON-encodes non-string payloads automatically.
     'encode_payload' => true,
-
-    // Algorithm passed to hash_hmac() when signing outbound payloads.
     'signing_algorithm' => 'sha256',
-
     'outbound' => [
-        // Class implementing SignerInterface, used to sign outbound webhook payloads.
+        // Implements SignerInterface.
         'signer' => HmacSigner::class,
-        // Class implementing RetryPolicyInterface, used to schedule retry delays.
+        // Implements RetryPolicyInterface.
         'retry_policy' => BackoffRetryPolicy::class,
-        // Fallback used when a subscriber doesn't set its own rate_limit_max/
-        // rate_limit_interval_seconds columns. A conservative default (60 sends
-        // per 60 seconds, ~1/sec) safe for most third-party APIs out of the box.
+        // Fallback when a subscriber doesn't set its own.
         'rate_limiter' => [
             'max_sends' => 60,
             'interval_seconds' => 60,
         ],
-        // Worst-case ceiling, in seconds, a per-delivery lock is held for. This should
-        // comfortably exceed how long a single delivery could ever realistically take
-        // (HTTP call + processing) - it's a crash safety net, not the expected duration.
         'max_lock_seconds' => 300,
-        // Ceiling, in seconds, for a whole DeliverWebhookJob run (which may process many
-        // deliveries in one pass). The queue supervisor kills the job past this and calls
-        // failed(). Larger than max_lock_seconds since one run covers many deliveries.
         'job_timeout' => 900,
-        // Seconds a delivery must wait before its EFFECTIVE priority (for ordering only -
-        // the stored priority never changes) ages up one level. Null disables aging
-        // entirely. Continues aging past a single level, e.g. at 3x this value a LOWEST
-        // delivery orders as HIGHEST. Measured from next_attempt_at if set, else created_at.
+        // Seconds before a waiting delivery's effective priority bumps up a level. Null disables aging.
         'priority_aging_seconds' => 300,
+        // Maps api_key_reference to the real credential.
+        'api_keys' => [],
+        // Maps response_protocol_reference to a response handler.
+        'response_protocols' => [],
     ],
-
     'inbound' => [
-        // Global kill switch - turns off inbound verification/tracking for every provider.
         'enabled' => true,
+        'max_attempts' => 10,
+        // Each secret is a real credential - source it via env(), like stripe does.
         'verifiers' => [
             'stripe' => [
                 'class' => StripeVerifier::class,
                 'secret' => env('HOOKAMATIC_STRIPE_WEBHOOK_SECRET'),
                 'tolerance' => 300,
-                // Per-provider kill switch - turns off just this provider.
                 'enabled' => true,
             ],
         ],
     ],
-
+    'subscriber' => [
+        'default_sort_column' => 'created_at',
+        'default_sort_order' => 'asc',
+    ],
+    'event_type' => [
+        'default_sort_column' => 'created_at',
+        'default_sort_order' => 'asc',
+    ],
 ];

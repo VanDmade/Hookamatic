@@ -6,6 +6,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as Orchestra;
 use VanDmade\Hookamatic\HookamaticServiceProvider;
 
+use function Orchestra\Testbench\default_migration_path;
+
 abstract class TestCase extends Orchestra
 {
 
@@ -27,6 +29,14 @@ abstract class TestCase extends Orchestra
             'prefix' => '',
         ]);
         $app['config']->set('queue.default', 'sync');
+    }
+
+    protected function defineDatabaseMigrations(): void
+    {
+        // Testbench's bundled users/password_reset_tokens/sessions migration - the base
+        // Hookamatic migrations build a real foreign key to auth.providers.users.model
+        // (Illuminate\Foundation\Auth\User by default), so a real users table has to exist.
+        $this->loadMigrationsFrom(default_migration_path());
     }
 
 }

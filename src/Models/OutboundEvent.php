@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use VanDmade\Hookamatic\Enums\InboundStatus;
 
 class OutboundEvent extends Model
 {
@@ -43,10 +42,6 @@ class OutboundEvent extends Model
             if (auth()->check()) {
                 $model->created_by = auth()->id();
             }
-            // Defaults the status to pending if not set.
-            if (is_null($model->status)) {
-                $model->status = InboundStatus::PENDING;
-            }
         });
     }
 
@@ -69,7 +64,7 @@ class OutboundEvent extends Model
      */
     public function deliveries(): HasMany
     {
-        return $this->hasMany(Delivery::class, 'event_id');
+        return $this->hasMany(Delivery::class, 'outbound_event_id');
     }
 
     /**

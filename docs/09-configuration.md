@@ -2,35 +2,72 @@
 
 ## Publishing the config file
 
-> Short sentence + command: `php artisan vendor:publish --tag=hookamatic-config`.
+```bash
+php artisan vendor:publish --tag=hookamatic-config
+```
 
-## `config/hookamatic.php`
+Every key in `config/hookamatic.php` is a behavior/tuning setting, not sensitive data - so unlike some packages, none of them read from `env()`; they're set directly in the published file. The one exception is any verifier's `secret` under `inbound.verifiers.*` - that's an actual credential, so it always goes through `env()` instead, the same way you'd never hardcode a database password into a config file. This isn't Stripe-specific: it's why the built-in `stripe` entry uses `env('HOOKAMATIC_STRIPE_WEBHOOK_SECRET')`, and it's the pattern to follow for any other provider you configure later.
 
-> Table (mirror Cacheeze's `02-configuration-and-profiles.md` layout: Key | Env Var | Default | What it does) covering the top-level keys: `max_delivery_attempts`, `toggle_disabled_on_exhausted_delivery`, `toggle_disabled_after_exhausted_deliveries`, `organization_model`, `fail_loud_on_no_subscribers`, `encode_payload`, `signing_algorithm`.
->
-> **Gap to resolve before writing this table**: none of these currently have `env()` calls in the config file (unlike Cacheeze's), so decide whether that's intentional or worth adding while you're in here.
+## `config/hookamatic.php` - top level
+
+| Key | Default | What it does |
+|---|---|---|
+| `max_delivery_attempts` | `3` | Total attempts (including the first) before a delivery is marked `exhausted`. |
+| `toggle_disabled_on_exhausted_delivery` | `false` | Disable a subscriber the instant any single delivery exhausts. |
+| `toggle_disabled_after_exhausted_deliveries` | `null` | Disable a subscriber after this many exhausted deliveries in the past day. Ignored when the option above is `true`. |
+| `organization_model` | `null` | Fully-qualified model class for multi-organization scoping. `null` disables it entirely. |
+| `fail_loud_on_no_subscribers` | `false` | Throw instead of returning `false` from `dispatch()` when the event type has no subscribers. |
+| `allow_without_provider` | `false` | Let a route using the `hookamatic` middleware with no provider parameter bypass Hookamatic entirely instead of returning a 400. |
+| `encode_payload` | `true` | JSON-encode a non-string outbound payload automatically instead of throwing. |
+| `signing_algorithm` | `'sha256'` | Algorithm passed to `hash_hmac()` when signing outbound payloads. |
+
+See [Retries & Backoff](04-retries-and-backoff.md) and [Subscribers & Event Types](02-subscribers.md) for the first four; [Inbound Receiving](05-inbound-receiving.md#opting-a-route-out) for `allow_without_provider`; [Signing](03-signing.md) for the last two.
 
 ## `retry`
 
-> Short sentence + table: `delay`, `exponential_delay` - link to [Retries & Backoff](04-retries-and-backoff.md) rather than re-explaining the schedule math here.
+| Key | Default | What it does |
+|---|---|---|
+| `delay` | `5` | Base delay, in seconds, before a failed delivery is retried. |
+| `exponential_delay` | `true` | Doubles the delay per attempt instead of using a flat `delay` every time. |
+
+Full schedule math in [Retries & Backoff](04-retries-and-backoff.md#the-retry-policy).
 
 ## `outbound`
 
-> Short sentence + table: `signer`, `retry_policy`, `rate_limiter.max_sends`/`rate_limiter.interval_seconds`, `max_lock_seconds`, `job_timeout`, `priority_aging_seconds`.
+| Key | Default | What it does |
+|---|---|---|
+| `signer` | `HmacSigner::class` | Class implementing `SignerInterface`. |
+| `retry_policy` | `BackoffRetryPolicy::class` | Class implementing `RetryPolicyInterface`. |
+| `rate_limiter.max_sends` / `rate_limiter.interval_seconds` | `60` / `60` | Fallback rate limit when a subscriber doesn't set its own `rate_limit_max`/`rate_limit_interval_seconds`. |
+| `max_lock_seconds` | `300` | Worst-case ceiling a per-delivery lock is held for - a crash safety net, not the expected send duration. |
+| `job_timeout` | `900` | Ceiling for a whole `DeliverWebhookJob` run (which may process many deliveries). Larger than `max_lock_seconds` since one run covers many deliveries. |
+| `priority_aging_seconds` | `300` | How often a waiting delivery's effective priority bumps up a level. `null` disables aging. |
+| `api_keys` | `[]` | Maps a subscriber's `api_key_reference` to the actual credential to send - keeps real credentials out of the database. Not yet consumed anywhere in code; the column exists for this purpose but nothing reads this config key yet. |
+| `response_protocols` | `[]` | Maps a subscription's `response_protocol_reference` to a handler invoked with the subscriber's response. Same caveat as `api_keys` - not yet consumed anywhere. |
+
+See [Outbound Dispatching](01-outbound-dispatching.md).
 
 ## `inbound`
 
-> Short sentence + table: `enabled`, `verifiers.{provider}.class`/`secret`/`tolerance`/`enabled` - link to [Inbound Verification](06-inbound-verification.md) for how verifiers actually use these.
+| Key | Default | What it does |
+|---|---|---|
+| `enabled` | `true` | Global kill switch for inbound verification/tracking, every provider. |
+| `max_attempts` | `10` | How many times the same provider event can come back through the middleware without succeeding before Hookamatic gives up and starts returning 200 anyway. |
+| `verifiers.{provider}.class` | - | Class implementing `VerifierInterface` for this provider. |
+| `verifiers.{provider}.secret` | - | Shared secret used to verify this provider's signatures. |
+| `verifiers.{provider}.tolerance` | - | Max signature age (seconds) before it's rejected as a possible replay. Built into `StripeVerifier`; a custom verifier decides for itself whether to use this. |
+| `verifiers.{provider}.enabled` | `true` | Per-provider kill switch. |
 
-## Known gaps to flag or fill in before this doc ships
+See [Inbound Verification](06-inbound-verification.md) and [Inbound Processing](07-inbound-processing.md#retry-attempts--giving-up).
 
-> These are referenced in code via `config('hookamatic.X', $default)` but don't actually exist as keys in `config/hookamatic.php` right now, so they currently just silently fall back to their default every time:
-> - `allow_without_provider` (used in `VerifyInboundWebhook`)
-> - `inbound.max_attempts` (used in `VerifyInboundWebhook`, defaults to `10`)
-> - `outbound.response_protocols` (referenced by the `hookamatic_subscriber_events.response_protocol_reference` migration comment)
-> - `outbound.api_keys` (referenced by the `hookamatic_subscribers.api_key_reference` migration comment)
->
-> Either add them to `config/hookamatic.php` with real defaults, or don't document them as configurable yet - just don't document a default that doesn't actually exist in the file.
+## `subscriber` / `event_type`
+
+| Key | Default | What it does |
+|---|---|---|
+| `subscriber.default_sort_column` / `subscriber.default_sort_order` | `'created_at'` / `'asc'` | Default sort for `hookamatic/subscriber/data` and `hookamatic/list/subscribers` when the request doesn't specify one. |
+| `event_type.default_sort_column` / `event_type.default_sort_order` | `'created_at'` / `'asc'` | Same, for the `event-type` endpoints. |
+
+See [Subscribers & Event Types](02-subscribers.md#managing-subscribers--event-types-over-http).
 
 ## See also
 
