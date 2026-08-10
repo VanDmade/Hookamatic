@@ -4,6 +4,7 @@ namespace VanDmade\Hookamatic\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use VanDmade\Hookamatic\Enums\DeliveryStatus;
 use VanDmade\Hookamatic\Events\WebhookDelivered;
 use VanDmade\Hookamatic\Events\WebhookDeliveryExhausted;
@@ -19,7 +20,7 @@ use Throwable;
 class DeliverWebhookJob implements ShouldQueue
 {
 
-    use Queueable;
+    use Dispatchable, Queueable;
 
     /**
      * WARNING:

@@ -86,7 +86,7 @@ class DeliverWebhookJobTest extends TestCase
         Http::fake(['*' => Http::response('error', 500)]);
         $subscriber = $this->makeSubscriber();
         // Simulates a 3rd attempt of a delivery
-        $delivery = $this->makeDelivery($subscriber, ['attempt_number' => 3]);
+        $delivery = $this->makeDelivery($subscriber, ['attemptNumber' => 3]);
         DeliverWebhookJob::dispatch();
         $delivery->refresh();
         // The delivery should be marked as exhausted and NO new attempts should be created

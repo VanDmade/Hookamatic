@@ -1,10 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use VanDmade\Hookamatic\Http\Controllers\EventTypeController;
 use VanDmade\Hookamatic\Http\Controllers\SubscriberController;
 
-Route::middleware('can:manage-hookamatic')
+Route::middleware(['can:manage-hookamatic', SubstituteBindings::class])
     ->prefix('hookamatic')
     ->name('hookamatic.')
     ->group(function() {

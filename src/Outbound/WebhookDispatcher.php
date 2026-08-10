@@ -27,7 +27,7 @@ class WebhookDispatcher
         if (empty($eventType)) {
             throw new Exception('Event type not found: '.$event);
         }
-        $subscribers = $this->eventTypeService->subscribers($eventType);
+        $subscribers = $eventType->subscribers;
         if ($subscribers->isEmpty()) {
             if (config('hookamatic.fail_loud_on_no_subscribers')) {
                 throw new Exception('No subscribers found for event type: '.$event);
@@ -49,8 +49,7 @@ class WebhookDispatcher
         $priorities = SubscriberEvent::where('event_type_id', $eventType->id)
             ->pluck('priority', 'subscriber_id');
         foreach ($subscribers as $subscriber) {
-            $priority = isset($priorities[$subscriber->id])
-                ? Priority::from($priorities[$subscriber->id]) : Priority::NORMAL;
+            $priority = $priorities[$subscriber->id] ?? Priority::NORMAL;
             $delivery = $this->deliveryService->create(
                 $subscriber->id,
                 $outboundEvent->id,

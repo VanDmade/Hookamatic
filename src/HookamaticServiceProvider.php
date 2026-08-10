@@ -10,6 +10,7 @@ use VanDmade\Hookamatic\Outbound\Signing\HmacSigner;
 use VanDmade\Hookamatic\Outbound\Retry\RetryPolicyInterface;
 use VanDmade\Hookamatic\Outbound\Retry\BackoffRetryPolicy;
 use VanDmade\Hookamatic\Middleware\VerifyInboundWebhook;
+use VanDmade\Hookamatic\Models\EventType;
 use VanDmade\Hookamatic\Models\Subscribers\Subscriber;
 use VanDmade\Hookamatic\Console\Commands\InboundStatsCommand;
 use VanDmade\Hookamatic\Console\Commands\OutboundStatsCommand;
@@ -45,13 +46,18 @@ class HookamaticServiceProvider extends ServiceProvider
         $router = $this->app['router'];
         $router->aliasMiddleware('hookamatic', VerifyInboundWebhook::class);
         $router->bind('subscriber', function($value) {
-            $subscriber = is_numeric($value)
-                ? Subscriber::find($value)
-                : Subscriber::where('slug', $value)->first();
+            $subscriber = is_numeric($value) ? Subscriber::find($value) : Subscriber::where('slug', $value)->first();
             if (is_null($subscriber)) {
                 throw new ModelNotFoundException();
             }
             return $subscriber;
+        });
+        $router->bind('eventType', function($value) {
+            $eventType = EventType::find($value);
+            if (is_null($eventType)) {
+                throw new ModelNotFoundException();
+            }
+            return $eventType;
         });
         // Default: require login to manage subscribers/event types. Override this gate
         // in your own app for anything more specific (e.g. admin-only) instead of

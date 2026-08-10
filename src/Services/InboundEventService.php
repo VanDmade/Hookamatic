@@ -14,9 +14,12 @@ class InboundEventService
         string $provider,
         string $providerEventId
     ): ?InboundEvent {
-        return InboundEvent::findOrCreate([
+        return InboundEvent::firstOrCreate([
             'provider' => $provider,
             'provider_event_id' => $providerEventId,
+        ], [
+            'payload' => [],
+            'status' => InboundStatus::PENDING,
         ]);
     }
 

@@ -30,6 +30,7 @@ class InboundEvent extends Model
     protected $casts = [
         'headers' => 'array',
         'payload' => 'array',
+        'status' => InboundStatus::class,
         'processed_at' => 'datetime',
         'failed_at' => 'datetime',
     ];
@@ -59,8 +60,8 @@ class InboundEvent extends Model
         return Attribute::make(
             set: function($request) {
                 return [
-                    'headers' => $request->headers->all(),
-                    'payload' => json_decode($request->getContent(), true),
+                    'headers' => json_encode($request->headers->all()),
+                    'payload' => $request->getContent(),
                     'ip_address' => $request->ip(),
                 ];
             }
