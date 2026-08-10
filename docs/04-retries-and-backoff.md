@@ -18,10 +18,7 @@ A retry isn't the same `Delivery` row updated in place - `DeliveryService::creat
 
 ## Exhausted deliveries
 
-Once a delivery's `attempt_number` reaches `hookamatic.max_delivery_attempts`, its status becomes `exhausted` instead of scheduling another retry, and `WebhookDeliveryExhausted` fires. Two config options can react automatically:
-
-- `toggle_disabled_on_exhausted_delivery` (default `false`) - disables the subscriber the instant *any* single delivery exhausts.
-- `toggle_disabled_after_exhausted_deliveries` (default `null`) - disables the subscriber after this many exhausted deliveries within the past 24 hours. Ignored if the option above, `toggle_disabled_on_exhausted_delivery` is `true`.
+Once a delivery's `attempt_number` reaches `hookamatic.max_delivery_attempts`, its status becomes `exhausted` instead of scheduling another retry, and `WebhookDeliveryExhausted` fires. `toggle_disabled_after_exhausted_deliveries` (default `null`) can react automatically - it disables the subscriber once this many deliveries (including the one that just exhausted) have exhausted within the past 24 hours. Set it to `1` to disable on the very first exhaustion; leave it `null` to disable this check entirely.
 
 Either way, the subscriber ends up disabled with `disabled_by_system = true` via `SubscriberService::markAsDisabled()` - see [Subscribers & Event Types](02-subscribers.md#disabling--enabling-a-subscriber).
 

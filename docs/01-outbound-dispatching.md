@@ -57,7 +57,7 @@ Each subscriber can set its own `rate_limit_max`/`rate_limit_interval_seconds`; 
 
 A failed delivery doesn't get retried immediately - `DeliveryService::createAttempt()` creates a brand-new `Delivery` row (same `delivery_uuid`, incremented `attempt_number`, `next_attempt_at` set per the retry policy) and leaves the failed one as a historical record. See [Retries & Backoff](04-retries-and-backoff.md) for the delay schedule.
 
-`WebhookDelivered`, `WebhookDeliveryFailed`, and `WebhookDeliveryExhausted` all fire after the delivery's final state is saved, so listeners always see persisted data. `WebhookDeliveryExhausted` also tells you whether the subscriber was auto-disabled as a result (`toggle_disabled_on_exhausted_delivery` / `toggle_disabled_after_exhausted_deliveries` in config).
+`WebhookDelivered`, `WebhookDeliveryFailed`, and `WebhookDeliveryExhausted` all fire after the delivery's final state is saved, so listeners always see persisted data. `WebhookDeliveryExhausted` also tells you whether the subscriber was auto-disabled as a result (`toggle_disabled_after_exhausted_deliveries` in config).
 
 ## See also
 

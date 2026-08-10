@@ -153,4 +153,29 @@ class InboundWebhookTest extends TestCase
         Event::assertDispatched(InboundWebhookMaxAttempts::class);
     }
 
+    public function test_failed_verification_attempts_do_not_count_toward_max_attempts(): void
+    {
+        config()->set('hookamatic.inbound.max_attempts', 2);
+        $body = json_encode(['id' => 'evt_budget', 'should_fail' => true]);
+
+        // Several forged-signature attempts against the same event id first - none of
+        // these should draw down the retry budget that max_attempts governs.
+        for ($i = 0; $i < 5; $i++) {
+            $this->call('POST', 'hookamatic-test/stripe', [], [], [], $this->invalidServerVars(), $body)
+                ->assertStatus(403);
+        }
+
+        $server = $this->signedServerVars($body);
+        // Now two genuinely-signed (but failing-handler) attempts - should take exactly
+        // max_attempts of THESE to trip the max-attempts short circuit, not fewer.
+        $first = $this->call('POST', 'hookamatic-test/stripe', [], [], [], $server, $body);
+        $first->assertStatus(500);
+
+        $second = $this->call('POST', 'hookamatic-test/stripe', [], [], [], $server, $body);
+        $second->assertOk();
+
+        $event = InboundEvent::where('provider_event_id', 'evt_budget')->first();
+        $this->assertSame(2, $event->attempt_counter);
+    }
+
 }

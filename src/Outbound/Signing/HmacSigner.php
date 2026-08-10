@@ -8,7 +8,7 @@ class HmacSigner implements SignerInterface
 {
 
     public function sign(
-        string|array $payload,
+        string $payload,
         string $secret,
         ?int $timestamp = null
     ): string {
@@ -18,17 +18,6 @@ class HmacSigner implements SignerInterface
         }
         if (empty($payload)) {
             throw new InvalidArgumentException('Payload cannot be empty when creating a signature.');
-        }
-        if (!is_string($payload)) {
-            // Allows the develoepr to decide if they want to encode or throw an error if the payload is not a string. By default, we will encode the payload to a string.
-            if (config('hookamatic.encode_payload', true)) {
-                $payload = json_encode($payload);
-                if (!$payload) {
-                    throw new InvalidArgumentException('Payload could not be JSON-encoded when creating a signature.');
-                }
-            } else {
-                throw new InvalidArgumentException('Payload must be a string when creating a signature.');
-            }
         }
         if (empty($secret)) {
             throw new InvalidArgumentException('The secret received was empty, unable to create a signature.');

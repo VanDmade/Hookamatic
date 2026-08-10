@@ -42,22 +42,6 @@ class HmacSignerTest extends TestCase
         $signer->sign('payload', '');
     }
 
-    public function test_sign_json_encodes_a_non_string_payload_by_default(): void
-    {
-        $signer = new HmacSigner();
-        $signature = $signer->sign(['hello' => 'world'], 'secret', 1700000000);
-        $expected = hash_hmac('sha256', '1700000000.'.json_encode(['hello' => 'world']), 'secret');
-        $this->assertSame('t=1700000000,v1='.$expected, $signature);
-    }
-
-    public function test_sign_throws_for_a_non_string_payload_when_encode_payload_is_disabled(): void
-    {
-        config()->set('hookamatic.encode_payload', false);
-        $signer = new HmacSigner();
-        $this->expectException(InvalidArgumentException::class);
-        $signer->sign(['hello' => 'world'], 'secret');
-    }
-
     public function test_sign_throws_for_an_unsupported_algorithm(): void
     {
         config()->set('hookamatic.signing_algorithm', 'not-a-real-algorithm');

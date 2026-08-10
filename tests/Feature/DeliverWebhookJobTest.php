@@ -97,7 +97,7 @@ class DeliverWebhookJobTest extends TestCase
     public function test_disables_the_subscriber_on_exhaustion_when_configured(): void
     {
         config()->set('hookamatic.max_delivery_attempts', 1);
-        config()->set('hookamatic.toggle_disabled_on_exhausted_delivery', true);
+        config()->set('hookamatic.toggle_disabled_after_exhausted_deliveries', 1);
         Http::fake(['*' => Http::response('error', 500)]);
         $subscriber = $this->makeSubscriber();
         $this->makeDelivery($subscriber);
@@ -105,6 +105,21 @@ class DeliverWebhookJobTest extends TestCase
         $subscriber->refresh();
         $this->assertNotNull($subscriber->disabled_at);
         $this->assertTrue($subscriber->disabled_by_system);
+    }
+
+    public function test_does_not_disable_before_reaching_the_exhausted_delivery_threshold(): void
+    {
+        // Regression test: the threshold count must include the delivery currently being
+        // exhausted (not yet saved at the point the count runs), or this would require one
+        // extra exhaustion beyond the configured threshold to actually trigger.
+        config()->set('hookamatic.max_delivery_attempts', 1);
+        config()->set('hookamatic.toggle_disabled_after_exhausted_deliveries', 2);
+        Http::fake(['*' => Http::response('error', 500)]);
+        $subscriber = $this->makeSubscriber();
+        $this->makeDelivery($subscriber);
+        DeliverWebhookJob::dispatch();
+        $subscriber->refresh();
+        $this->assertNull($subscriber->disabled_at);
     }
 
     public function test_fires_webhook_delivered_on_success(): void

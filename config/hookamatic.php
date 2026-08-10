@@ -6,8 +6,8 @@ use VanDmade\Hookamatic\Inbound\Providers\StripeVerifier;
 
 return [
     'max_delivery_attempts' => 3,
-    'toggle_disabled_on_exhausted_delivery' => false,
-    // Ignored when toggle_disabled_on_exhausted_delivery is true. Null disables this check.
+    // Disables a subscriber after this many exhausted deliveries in a day. Set to 1 to
+    // disable on the very first exhaustion. Null disables this check.
     'toggle_disabled_after_exhausted_deliveries' => null,
     // Null disables organization/tenant scoping.
     'organization_model' => null,
@@ -20,7 +20,6 @@ return [
         // Doubles the delay per attempt (delay * 2^(attempt - 1)).
         'exponential_delay' => true,
     ],
-    'encode_payload' => true,
     'signing_algorithm' => 'sha256',
     'outbound' => [
         // Implements SignerInterface.
@@ -43,6 +42,7 @@ return [
     ],
     'inbound' => [
         'enabled' => true,
+        // Counts only verified attempts - forged/failed-signature requests don't count.
         'max_attempts' => 10,
         // Each secret is a real credential - source it via env(), like stripe does.
         'verifiers' => [

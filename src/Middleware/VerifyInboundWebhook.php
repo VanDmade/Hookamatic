@@ -43,7 +43,7 @@ class VerifyInboundWebhook
             return response()->json(['message' => 'Provider not specified'], 400);
         }
         // Per-provider kill switch - bypasses Hookamatic just for this one provider.
-        if (!config("hookamatic.inbound.verifiers.{$provider}.enabled", true)) {
+        if (!config('hookamatic.inbound.verifiers.'.$provider.'.enabled', true)) {
             return $next($request);
         }
         // Grabs and validates the verifier from the config file. If the provider is not configured, an exception will be thrown.
@@ -62,15 +62,16 @@ class VerifyInboundWebhook
         $inboundEvent->event_type = $eventType;
         $inboundEvent->request = $request;
         $inboundEvent->status = InboundStatus::PENDING;
-        $inboundEvent->attempt_counter += 1;
         // Verifies the inbound webhook request to make sure everything lines up
         if (!$verifier->verify($request->getContent(), $request->headers->all())) {
             $inboundEvent->status = InboundStatus::FAILED;
             $inboundEvent->save();
             InboundWebhookVerificationFailed::dispatch($provider, $inboundEvent);
-            // If the verification fails, a 403 response is returned.
+            // If the verification fails, a 403 response is returned
             return response()->json(['message' => 'Forbidden'], 403);
         }
+        // Count genuine attempts rather than spoofed attempts
+        $inboundEvent->attempt_counter += 1;
         $response = $next($request);
         // Closes out the inbound event with the final status and duration.
         $successful = $response->isSuccessful();

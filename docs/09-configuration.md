@@ -13,15 +13,13 @@ Every key in `config/hookamatic.php` is a behavior/tuning setting, not sensitive
 | Key | Default | What it does |
 |---|---|---|
 | `max_delivery_attempts` | `3` | Total attempts (including the first) before a delivery is marked `exhausted`. |
-| `toggle_disabled_on_exhausted_delivery` | `false` | Disable a subscriber the instant any single delivery exhausts. |
-| `toggle_disabled_after_exhausted_deliveries` | `null` | Disable a subscriber after this many exhausted deliveries in the past day. Ignored when the option above is `true`. |
+| `toggle_disabled_after_exhausted_deliveries` | `null` | Disable a subscriber after this many exhausted deliveries in the past day (the triggering one counts). Set to `1` to disable on the first exhaustion. |
 | `organization_model` | `null` | Fully-qualified model class for multi-organization scoping. `null` disables it entirely. |
 | `fail_loud_on_no_subscribers` | `false` | Throw instead of returning `false` from `dispatch()` when the event type has no subscribers. |
 | `allow_without_provider` | `false` | Let a route using the `hookamatic` middleware with no provider parameter bypass Hookamatic entirely instead of returning a 400. |
-| `encode_payload` | `true` | JSON-encode a non-string outbound payload automatically instead of throwing. |
 | `signing_algorithm` | `'sha256'` | Algorithm passed to `hash_hmac()` when signing outbound payloads. |
 
-See [Retries & Backoff](04-retries-and-backoff.md) and [Subscribers & Event Types](02-subscribers.md) for the first four; [Inbound Receiving](05-inbound-receiving.md#opting-a-route-out) for `allow_without_provider`; [Signing](03-signing.md) for the last two.
+See [Retries & Backoff](04-retries-and-backoff.md) for `max_delivery_attempts`/`toggle_disabled_after_exhausted_deliveries`; [Subscribers & Event Types](02-subscribers.md) for `organization_model`/`fail_loud_on_no_subscribers`; [Inbound Receiving](05-inbound-receiving.md#opting-a-route-out) for `allow_without_provider`; [Signing](03-signing.md) for `signing_algorithm`.
 
 ## `retry`
 
@@ -52,7 +50,7 @@ See [Outbound Dispatching](01-outbound-dispatching.md).
 | Key | Default | What it does |
 |---|---|---|
 | `enabled` | `true` | Global kill switch for inbound verification/tracking, every provider. |
-| `max_attempts` | `10` | How many times the same provider event can come back through the middleware without succeeding before Hookamatic gives up and starts returning 200 anyway. |
+| `max_attempts` | `10` | How many *verified* attempts at the same provider event can fail before Hookamatic gives up and starts returning 200 anyway. Forged/failed-signature requests don't count. |
 | `verifiers.{provider}.class` | - | Class implementing `VerifierInterface` for this provider. |
 | `verifiers.{provider}.secret` | - | Shared secret used to verify this provider's signatures. |
 | `verifiers.{provider}.tolerance` | - | Max signature age (seconds) before it's rejected as a possible replay. Built into `StripeVerifier`; a custom verifier decides for itself whether to use this. |

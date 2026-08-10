@@ -39,7 +39,7 @@ $subscriberService->markAsDisabled($subscriber, 'Too many failed deliveries.');
 $subscriberService->markAsEnabled($subscriber);
 ```
 
-A subscriber disabled by a person has `disabled_by` set to that user's ID. A subscriber disabled automatically (no authenticated user in context) gets `disabled_by_system` = true instead - that's the flag to check if you want to distinguish "we turned this off" from "a human turned this off". `hookamatic.toggle_disabled_on_exhausted_delivery` and `hookamatic.toggle_disabled_after_exhausted_deliveries` in config can trigger this automatically - see [Retries & Backoff](04-retries-and-backoff.md).
+A subscriber disabled by a person has `disabled_by` set to that user's ID. A subscriber disabled automatically (no authenticated user in context) gets `disabled_by_system` = true instead - that's the flag to check if you want to distinguish "we turned this off" from "a human turned this off". `hookamatic.toggle_disabled_after_exhausted_deliveries` in config can trigger this automatically - see [Retries & Backoff](04-retries-and-backoff.md).
 
 ## Managing subscribers & event types over HTTP
 

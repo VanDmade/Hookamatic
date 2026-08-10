@@ -85,18 +85,14 @@ class DeliverWebhookJob implements ShouldQueue
                     if ($delivery->attempt_number >= config('hookamatic.max_delivery_attempts', 3)) {
                         $delivery->status = DeliveryStatus::EXHAUSTED;
                         // If the delivery has failed, we can mark the subscriber as disabled
-                        if (config('hookamatic.toggle_disabled_on_exhausted_delivery')) {
-                            $disabled = true;
-                            $subscriberService->markAsDisabled(
-                                $delivery->subscriber_id,
-                                'Marked as disabled due to failed delivery after '.$delivery->attempt_number.' attempts.'
-                            );
-                        } elseif (!is_null($amount = config('hookamatic.toggle_disabled_after_exhausted_deliveries', null))) {
-                            // This will allow for a subscriber's delivery to fail, BUT, if they consistently fail it'll disable it
+                        if (!is_null($amount = config('hookamatic.toggle_disabled_after_exhausted_deliveries', null))) {
+                            // This will allow for a subscriber's delivery to fail, BUT, if they consistently fail it'll disable it.
+                            // +1 accounts for this delivery itself - its EXHAUSTED status is only set in memory
+                            // so far, not yet saved, so the query below can't see it.
                             $totalFailures = $delivery->subscriber->deliveries()
                                 ->where('status', DeliveryStatus::EXHAUSTED)
                                 ->where('created_at', '>=', now()->subDay())
-                                ->count();
+                                ->count() + 1;
                             if ($totalFailures >= $amount) {
                                 $disabled = true;
                                 $subscriberService->markAsDisabled(

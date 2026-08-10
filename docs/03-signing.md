@@ -33,7 +33,7 @@ use VanDmade\Hookamatic\Outbound\Signing\SignerInterface;
 
 class MySigner implements SignerInterface
 {
-    public function sign(string|array $payload, string $secret, ?int $timestamp = null): string
+    public function sign(string $payload, string $secret, ?int $timestamp = null): string
     {
         // ...
     }
@@ -47,7 +47,6 @@ Set `hookamatic.outbound.signer` to your class and `WebhookSender` will use it i
 | Key | Default | What it does |
 |---|---|---|
 | `signing_algorithm` | `'sha256'` | Passed straight to `hash_hmac()`. Must be one PHP's `hash_algos()` actually supports. |
-| `encode_payload` | `true` | When the payload isn't already a string, `json_encode()` it automatically. If `false`, a non-string payload throws instead of getting silently encoded. |
 
 ## See also
 

@@ -12,7 +12,7 @@ After your handler returns, the middleware checks `$response->isSuccessful()` (a
 
 ## Retry attempts & giving up
 
-Webhook providers retry on anything other than a 2xx. `attempt_counter` on the `InboundEvent` increments every time the same event comes back through the middleware. Once it reaches `hookamatic.inbound.max_attempts` (default 10) without a successful response, `InboundWebhookMaxAttempts` fires and Hookamatic starts returning `200` for that event instead of running your handler again - not because it succeeded, but to stop the provider from retrying indefinitely. Treat that event fires as "needs manual investigation.". Shame on you for breaking something!
+Webhook providers retry on anything other than a 2xx. `attempt_counter` on the `InboundEvent` increments only when a request passes verification and your handler actually runs - a forged/failed-signature request never counts against it, so an attacker guessing at an event ID can't burn through a legitimate event's retry budget before it's even arrived. Once `attempt_counter` reaches `hookamatic.inbound.max_attempts` (default 10) without a successful response, `InboundWebhookMaxAttempts` fires and Hookamatic starts returning `200` for that event instead of running your handler again - not because it succeeded, but to stop the provider from retrying indefinitely. Treat that event firing as "needs manual investigation." Shame on you for breaking something!
 
 ## Reacting to processing outcomes
 
