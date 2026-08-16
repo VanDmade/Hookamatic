@@ -18,7 +18,7 @@ class SubscriberController extends HookamaticController
         protected SubscriberService $subscriberService
     ) {}
 
-    public function get(Subscriber $subscriber): JSONResponse
+    public function get(Subscriber $subscriber): JsonResponse
     {
         try {
             return $this->success([
@@ -30,7 +30,7 @@ class SubscriberController extends HookamaticController
         }
     }
 
-    public function data(TableRequest $request): JSONResponse
+    public function data(TableRequest $request): JsonResponse
     {
         try {
             $data = $request->validated();
@@ -51,7 +51,7 @@ class SubscriberController extends HookamaticController
     }
 
 
-    public function store(SubscriberRequest $request): JSONResponse
+    public function store(SubscriberRequest $request): JsonResponse
     {
         try {
             $data = $request->validated();
@@ -70,7 +70,7 @@ class SubscriberController extends HookamaticController
         }
     }
 
-    public function update(SubscriberRequest $request, Subscriber $subscriber): JSONResponse
+    public function update(SubscriberRequest $request, Subscriber $subscriber): JsonResponse
     {
         try {
             $data = $request->validated();
@@ -89,7 +89,7 @@ class SubscriberController extends HookamaticController
         }
     }
 
-    public function destroy(Subscriber $subscriber): JSONResponse
+    public function destroy(Subscriber $subscriber): JsonResponse
     {
         try {
             $this->subscriberService->delete($subscriber);
@@ -102,7 +102,7 @@ class SubscriberController extends HookamaticController
         }
     }
 
-    public function list(): JSONResponse
+    public function list(): JsonResponse
     {
         try {
             return $this->success([

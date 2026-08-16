@@ -17,7 +17,7 @@ class EventTypeController extends HookamaticController
         protected EventTypeService $eventTypes
     ) {}
 
-    public function get(EventType $eventType): JSONResponse
+    public function get(EventType $eventType): JsonResponse
     {
         try {
             return $this->success([
@@ -29,7 +29,7 @@ class EventTypeController extends HookamaticController
         }
     }
 
-    public function data(TableRequest $request): JSONResponse
+    public function data(TableRequest $request): JsonResponse
     {
         try {
             $data = $request->validated();
@@ -49,7 +49,7 @@ class EventTypeController extends HookamaticController
         }
     }
 
-    public function store(EventTypeRequest $request): JSONResponse
+    public function store(EventTypeRequest $request): JsonResponse
     {
         try {
             $eventType = $this->eventTypes->create($request->validated());
@@ -63,13 +63,10 @@ class EventTypeController extends HookamaticController
         }
     }
 
-    public function update(EventTypeRequest $request, EventType $eventType): JSONResponse
+    public function update(EventTypeRequest $request, EventType $eventType): JsonResponse
     {
         try {
             $eventType = $this->eventTypes->update($eventType, $request->validated());
-            if (!$eventType) {
-                return $this->error(__('hookamatic::event_type.errors.update_failed'), 500);
-            }
             return $this->success([
                 'message' => __('hookamatic::event_type.messages.updated'),
                 'event_type' => $eventType,
@@ -80,7 +77,7 @@ class EventTypeController extends HookamaticController
         }
     }
 
-    public function destroy(EventType $eventType): JSONResponse
+    public function destroy(EventType $eventType): JsonResponse
     {
         try {
             $this->eventTypes->delete($eventType);
@@ -93,7 +90,7 @@ class EventTypeController extends HookamaticController
         }
     }
 
-    public function list(): JSONResponse
+    public function list(): JsonResponse
     {
         try {
             return $this->success([

@@ -15,7 +15,8 @@ class OrganizationScope implements Scope
             // The developer doesn't have multi-tenent set up
             return;
         }
-        $organizationId = auth()->user()?->organization_id ?? null;
+        $user = auth()->user();
+        $organizationId = $user instanceof Model ? $user->getAttribute('organization_id') : null;
         if (is_null($organizationId)) {
             return;
         }
