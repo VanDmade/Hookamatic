@@ -3,6 +3,7 @@
 namespace VanDmade\Hookamatic\Console\Commands;
 
 use VanDmade\Hookamatic\Enums\DeliveryStatus;
+use VanDmade\Hookamatic\Events\HookamaticLog;
 use VanDmade\Hookamatic\Models\Delivery;
 use VanDmade\Hookamatic\Reports\OutboundReportBuilder;
 use VanDmade\Hookamatic\Services\DeliveryService;
@@ -85,9 +86,11 @@ class RetryFailedDeliveriesCommand extends HookamaticCommand
             }
             return self::SUCCESS;
         } catch (InvalidArgumentException $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             $this->error($error->getMessage());
             return self::FAILURE;
         } catch (Throwable $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             $this->error('An unexpected error occurred: '.$error->getMessage());
             return self::FAILURE;
         }

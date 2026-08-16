@@ -5,6 +5,7 @@ namespace VanDmade\Hookamatic\Tests\Feature;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use VanDmade\Hookamatic\Enums\DeliveryStatus;
+use VanDmade\Hookamatic\Events\HookamaticLog;
 use VanDmade\Hookamatic\Events\WebhookDelivered;
 use VanDmade\Hookamatic\Events\WebhookDeliveryExhausted;
 use VanDmade\Hookamatic\Events\WebhookDeliveryFailed;
@@ -15,6 +16,7 @@ use VanDmade\Hookamatic\Models\OutboundEvent;
 use VanDmade\Hookamatic\Models\Subscribers\Subscriber;
 use VanDmade\Hookamatic\Services\DeliveryService;
 use VanDmade\Hookamatic\Tests\TestCase;
+use InvalidArgumentException;
 
 class DeliverWebhookJobTest extends TestCase
 {
@@ -195,6 +197,19 @@ class DeliverWebhookJobTest extends TestCase
         $deliveryTwo->refresh();
         $this->assertSame(DeliveryStatus::SENT, $deliveryOne->status);
         $this->assertSame(DeliveryStatus::PENDING, $deliveryTwo->status);
+    }
+
+    public function test_handle_logs_and_still_rethrows_when_something_fails(): void
+    {
+        Event::fake([HookamaticLog::class]);
+        $thrown = null;
+        try {
+            DeliverWebhookJob::dispatch('a-subscriber-that-does-not-exist');
+        } catch (InvalidArgumentException $exception) {
+            $thrown = $exception;
+        }
+        $this->assertNotNull($thrown, 'Expected the exception to propagate out of the job.');
+        Event::assertDispatched(HookamaticLog::class, fn(HookamaticLog $event) => $event->type === 'error');
     }
 
 }

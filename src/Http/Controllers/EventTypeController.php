@@ -3,6 +3,7 @@
 namespace VanDmade\Hookamatic\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use VanDmade\Hookamatic\Events\HookamaticLog;
 use VanDmade\Hookamatic\Http\Requests\EventTypeRequest;
 use VanDmade\Hookamatic\Http\Requests\TableRequest;
 use VanDmade\Hookamatic\Models\EventType;
@@ -18,9 +19,14 @@ class EventTypeController extends HookamaticController
 
     public function get(EventType $eventType): JSONResponse
     {
-        return $this->success([
-            'event_type' => $eventType,
-        ]);
+        try {
+            return $this->success([
+                'event_type' => $eventType,
+            ]);
+        } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
+            return $this->error($error->getMessage(), 500);
+        }
     }
 
     public function data(TableRequest $request): JSONResponse
@@ -38,6 +44,7 @@ class EventTypeController extends HookamaticController
                 'data' => $eventTypes->items(),
             ]);
         } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             return $this->error($error->getMessage(), 500);
         }
     }
@@ -51,6 +58,7 @@ class EventTypeController extends HookamaticController
                 'event_type' => $eventType,
             ], 201);
         } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             return $this->error($error->getMessage(), 500);
         }
     }
@@ -67,23 +75,34 @@ class EventTypeController extends HookamaticController
                 'event_type' => $eventType,
             ]);
         } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             return $this->error($error->getMessage(), 500);
         }
     }
 
     public function destroy(EventType $eventType): JSONResponse
     {
-        $this->eventTypes->delete($eventType);
-        return $this->success([
-            'message' => __('hookamatic::event_type.messages.deleted'),
-        ], 204);
+        try {
+            $this->eventTypes->delete($eventType);
+            return $this->success([
+                'message' => __('hookamatic::event_type.messages.deleted'),
+            ], 204);
+        } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
+            return $this->error($error->getMessage(), 500);
+        }
     }
 
     public function list(): JSONResponse
     {
-        return $this->success([
-            'list' => $this->eventTypes->search(['select' => ['id as value', 'name as label']])->get(),
-        ]);
+        try {
+            return $this->success([
+                'list' => $this->eventTypes->search(['select' => ['id as value', 'name as label']])->get(),
+            ]);
+        } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
+            return $this->error($error->getMessage(), 500);
+        }
     }
 
 }

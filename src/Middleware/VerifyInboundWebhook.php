@@ -4,7 +4,9 @@ namespace VanDmade\Hookamatic\Middleware;
 
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 use VanDmade\Hookamatic\Enums\InboundStatus;
+use VanDmade\Hookamatic\Events\HookamaticLog;
 use VanDmade\Hookamatic\Events\InboundWebhookMaxAttempts;
 use VanDmade\Hookamatic\Events\InboundWebhookProcessed;
 use VanDmade\Hookamatic\Events\InboundWebhookReceived;
@@ -27,6 +29,24 @@ class VerifyInboundWebhook
         Closure $next,
         ?string $provider = null,
         ?string $eventType = null
+    ): Response {
+        try {
+            return $this->verify($request, $next, $provider, $eventType);
+        } catch (Throwable $exception) {
+            HookamaticLog::dispatch('error', $exception->getMessage(), [
+                'exception' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+            throw $exception;
+        }
+    }
+
+    private function verify(
+        Request $request,
+        Closure $next,
+        ?string $provider,
+        ?string $eventType
     ): Response {
         $startTime = microtime(true);
         // Global kill switch - bypasses Hookamatic entirely for every provider.

@@ -12,6 +12,7 @@ use VanDmade\Hookamatic\Outbound\Retry\BackoffRetryPolicy;
 use VanDmade\Hookamatic\Middleware\VerifyInboundWebhook;
 use VanDmade\Hookamatic\Models\EventType;
 use VanDmade\Hookamatic\Models\Subscribers\Subscriber;
+use VanDmade\Hookamatic\Console\Commands\AddOrganizationScopingCommand;
 use VanDmade\Hookamatic\Console\Commands\InboundStatsCommand;
 use VanDmade\Hookamatic\Console\Commands\OutboundStatsCommand;
 use VanDmade\Hookamatic\Console\Commands\RetryFailedDeliveriesCommand;
@@ -73,6 +74,7 @@ class HookamaticServiceProvider extends ServiceProvider
                 RetryFailedDeliveriesCommand::class,
                 OutboundStatsCommand::class,
                 InboundStatsCommand::class,
+                AddOrganizationScopingCommand::class,
             ]);
         }
     }

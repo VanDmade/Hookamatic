@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use VanDmade\Hookamatic\Enums\DeliveryStatus;
+use VanDmade\Hookamatic\Events\HookamaticLog;
 use VanDmade\Hookamatic\Events\WebhookDelivered;
 use VanDmade\Hookamatic\Events\WebhookDeliveryExhausted;
 use VanDmade\Hookamatic\Events\WebhookDeliveryFailed;
@@ -38,6 +39,25 @@ class DeliverWebhookJob implements ShouldQueue
     }
 
     public function handle(
+        WebhookRateLimiter $webhookRateLimiter,
+        WebhookSender $webhookSender,
+        RetryPolicyInterface $retryPolicy,
+        DeliveryService $deliveryService,
+        SubscriberService $subscriberService
+    ): void {
+        try {
+            $this->deliver($webhookRateLimiter, $webhookSender, $retryPolicy, $deliveryService, $subscriberService);
+        } catch (Throwable $exception) {
+            HookamaticLog::dispatch('error', $exception->getMessage(), [
+                'exception' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+            throw $exception;
+        }
+    }
+
+    private function deliver(
         WebhookRateLimiter $webhookRateLimiter,
         WebhookSender $webhookSender,
         RetryPolicyInterface $retryPolicy,

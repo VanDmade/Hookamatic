@@ -11,6 +11,12 @@ return [
     'toggle_disabled_after_exhausted_deliveries' => null,
     // Null disables organization/tenant scoping.
     'organization_model' => null,
+    // Tables to add organization scoping to (via hookamatic:add-organization-scoping)
+    // and the column to use on each.
+    'tables' => [
+        'hookamatic_subscribers' => 'organization_id',
+        'hookamatic_event_types' => 'organization_id',
+    ],
     'fail_loud_on_no_subscribers' => false,
     // Bypasses Hookamatic on a provider-less route instead of returning 400.
     'allow_without_provider' => false,

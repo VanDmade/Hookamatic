@@ -4,6 +4,7 @@ namespace VanDmade\Hookamatic\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
+use VanDmade\Hookamatic\Events\HookamaticLog;
 use VanDmade\Hookamatic\Http\Requests\SubscriberRequest;
 use VanDmade\Hookamatic\Http\Requests\TableRequest;
 use VanDmade\Hookamatic\Models\Subscribers\Subscriber;
@@ -19,9 +20,14 @@ class SubscriberController extends HookamaticController
 
     public function get(Subscriber $subscriber): JSONResponse
     {
-        return $this->success([
-            'subscriber' => $subscriber->load('eventTypes'),
-        ]);
+        try {
+            return $this->success([
+                'subscriber' => $subscriber->load('eventTypes'),
+            ]);
+        } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
+            return $this->error($error->getMessage(), 500);
+        }
     }
 
     public function data(TableRequest $request): JSONResponse
@@ -39,6 +45,7 @@ class SubscriberController extends HookamaticController
                 'data' => $subscribers->items(),
             ]);
         } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             return $this->error($error->getMessage(), 500);
         }
     }
@@ -58,6 +65,7 @@ class SubscriberController extends HookamaticController
                 'subscriber' => $subscriber->load('eventTypes'),
             ], 201);
         } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             return $this->error($error->getMessage(), 500);
         }
     }
@@ -76,23 +84,34 @@ class SubscriberController extends HookamaticController
                 'subscriber' => $subscriber->load('eventTypes'),
             ]);
         } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
             return $this->error($error->getMessage(), 500);
         }
     }
 
     public function destroy(Subscriber $subscriber): JSONResponse
     {
-        $this->subscriberService->delete($subscriber);
-        return $this->success([
-            'message' => __('hookamatic::subscriber.messages.deleted'),
-        ], 204);
+        try {
+            $this->subscriberService->delete($subscriber);
+            return $this->success([
+                'message' => __('hookamatic::subscriber.messages.deleted'),
+            ], 204);
+        } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
+            return $this->error($error->getMessage(), 500);
+        }
     }
 
     public function list(): JSONResponse
     {
-        return $this->success([
-            'list' => $this->subscriberService->search(['select' => ['id as value', 'name as label']])->get(),
-        ]);
+        try {
+            return $this->success([
+                'list' => $this->subscriberService->search(['select' => ['id as value', 'name as label']])->get(),
+            ]);
+        } catch (Exception $error) {
+            HookamaticLog::dispatch('error', $error->getMessage(), ['exception' => get_class($error)]);
+            return $this->error($error->getMessage(), 500);
+        }
     }
 
 }
